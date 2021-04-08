@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <title>Arbiter - Search</title>
+    <link rel="stylesheet" type="text/css" href="./styles.css"/>
+  </head>
+  
+  <body>
+    <h2>Search</h2>
+    <p>Enter the path for the directory to get outputs for</p>
+    <form method="get">
+      <label for="backend">Backend:</label></br>
+      <select id="backend" name="backend">
+        {{ $selectedBackend := .SelectedBackend }}
+        {{ range .BackendNames }}
+        <option value="{{ . }}" {{ if eq . $selectedBackend }}selected{{ end }}>{{ . }}</option>
+        {{ end }}
+      </select></br>
+      <label for="spath">Path:</label></br>
+      <input type="text" id="spath" name="spath" size="50" value="{{ .SPath }}"></br>
+      <input type="submit" value="Search">
+    </form>
+    {{ if .Err }}<p><strong>An error occurred:</strong> {{ .Err }}</p>{{ end }}
+    {{ if .Result }}
+    {{ if .Result.Subdirs }}
+    <h2>Sub Directories:</h2>
+    {{ range $key, $value := .Result.Subdirs }}
+    <p><a href="{{ $value }}">{{ $key }}</a></p>
+    {{ end }}
+    {{ end }}
+    {{ if .Result.Outputs }}
+    <h2>Outputs:</h2>
+    {{ range $key, $value := .Result.Outputs }}
+    <p><strong>{{ $key }}:</strong></p>
+    <p><pre>{{ $value }}</pre></p>
+    {{ end }}
+    {{ end }}
+    {{ end }}
+  </body>
+</html>
