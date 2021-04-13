@@ -1,6 +1,8 @@
 arbiter
 -------
 
+[![CI](https://github.com/enova/arbiter/actions/workflows/ci.yml/badge.svg)](https://github.com/enova/arbiter/actions/workflows/ci.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/enova/arbiter.svg)](https://pkg.go.dev/github.com/enova/arbiter)
+
 Arbiter is a tool to browse terraform outputs. It provides a web UI for browsing
 through terraform state in directory format. It's designed to be able to work
 with a selection of different named storage "backends". The main interface is a
