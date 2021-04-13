@@ -112,6 +112,19 @@ func main() {
 }
 ```
 
+## Screenshots
+
+For a simple terraform state with two sub-directories, prod and staging
+
+Top level search page:
+
+![Top Level](screenshots/arbiter_dir.png?raw=true "Top Level")
+
+Outputs in a sub directory:
+
+![Outputs](screenshots/arbiter_outputs.png?raw=true "Outputs")
+
+
 ## Assumptions
 
 The main assumption arbiter makes is that all of your outputs, including those
