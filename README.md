@@ -59,7 +59,7 @@ The `BackendListFromJSON` function can be used to initialize a list of backends
 based on a JSON configuration. Currently s3 is the only supported backend.
 Implementation uses [s3fs](https://github.com/packrat386/s3fs) and expects
 credentials to be available in either env vars or configuration files in
-accordance with the aws go SDK v1.
+accordance with the aws go SDK v2.
 
 Assuming you had a local `config.json` with the following contents:
 
