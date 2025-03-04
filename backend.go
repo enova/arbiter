@@ -1,15 +1,17 @@
 package arbiter
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/packrat386/s3fs"
 )
 
@@ -123,22 +125,18 @@ type s3ConnectionInfo struct {
 }
 
 func initS3State(info s3ConnectionInfo) (fs.FS, error) {
-	sess, err := session.NewSession()
+	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
-		return nil, fmt.Errorf("could not init aws session: %w", err)
+		return nil, fmt.Errorf("could not init aws config: %w", err)
 	}
 
-	var client *s3.S3
 	if info.RoleARN != "" {
-		client = s3.New(
-			sess,
-			&aws.Config{
-				Credentials: stscreds.NewCredentials(sess, info.RoleARN),
-			},
-		)
-	} else {
-		client = s3.New(sess)
+		stssvc := sts.NewFromConfig(cfg)
+		creds := stscreds.NewAssumeRoleProvider(stssvc, info.RoleARN)
+		cfg.Credentials = aws.NewCredentialsCache(creds)
 	}
 
-	return s3fs.NewS3FS(client, info.BucketName), nil
+	client := s3.NewFromConfig(cfg)
+
+	return s3fs.NewS3FSV2(client, info.BucketName), nil
 }
