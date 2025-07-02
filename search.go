@@ -79,8 +79,9 @@ type searchView struct {
 }
 
 type searchResult struct {
-	Outputs map[string]string
-	Subdirs map[string]string
+	Outputs          map[string]string
+	TerraformVersion string
+	Subdirs          map[string]string
 }
 
 func handleSearch(w http.ResponseWriter, r *http.Request, backends BackendList, tmpl *template.Template, log Logger) {
@@ -139,8 +140,13 @@ func executeSearch(stateFS fs.FS, spath, backend string) (searchResult, error) {
 	if err != nil {
 		return sr, fmt.Errorf("could not read tf outputs: %w", err)
 	}
+	terraformVersion, err := getTerraformVersion(path.Join(spath, stateFile), stateFS)
+	if err != nil {
+		return sr, fmt.Errorf("could not read terraform version: %w", err)
+	}
 
 	sr.Outputs = outputs
+	sr.TerraformVersion = terraformVersion
 	return sr, nil
 }
 
@@ -176,11 +182,27 @@ func getOutputs(stateFile string, stateFS fs.FS) (map[string]string, error) {
 
 		data[k] = string(pretty)
 	}
-	if tfdata.TerraformVersion != "" {
-		data["terraform_version"] = tfdata.TerraformVersion
-	}
 
 	return data, nil
+}
+
+func getTerraformVersion(stateFile string, stateFS fs.FS) (string, error) {
+	f, err := stateFS.Open(stateFile)
+	if err != nil {
+		return "", fmt.Errorf("could not fetch tf state: %w", err)
+	}
+
+	var tfdata tfStateFile
+	err = json.NewDecoder(f).Decode(&tfdata)
+	if err != nil {
+		return "", fmt.Errorf("could not parse tf state: %w", err)
+	}
+
+	if tfdata.TerraformVersion != "" {
+		return tfdata.TerraformVersion, nil
+	}
+
+	return "", nil
 }
 
 func render(w http.ResponseWriter, view searchView, tmpl *template.Template, log Logger) {
