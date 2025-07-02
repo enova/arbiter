@@ -146,7 +146,8 @@ func executeSearch(stateFS fs.FS, spath, backend string) (searchResult, error) {
 
 // TFStateFile represents a terraform state file. We only parse the outputs.
 type tfStateFile struct {
-	Outputs map[string]tfOutput `json:"outputs"`
+	Outputs          map[string]tfOutput `json:"outputs"`
+	TerraformVersion string              `json:"terraform_version"`
 }
 
 // TFOutput is the value of a single terraform output.
@@ -174,6 +175,9 @@ func getOutputs(stateFile string, stateFS fs.FS) (map[string]string, error) {
 		}
 
 		data[k] = string(pretty)
+	}
+	if tfdata.TerraformVersion != "" {
+		data["terraform_version"] = tfdata.TerraformVersion
 	}
 
 	return data, nil
