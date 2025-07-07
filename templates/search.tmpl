@@ -31,7 +31,7 @@
     <h2>Outputs:</h2>
     {{ range $key, $value := .Result.Outputs }}
     <p><strong>{{ $key }}:</strong></p>
-    <p><pre>{{ $value }}</pre></p>
+    <p><pre>{{ $value | prettyJSON }}</pre></p>
     {{ end }}
     {{ end }}
     {{ if .Result.TerraformVersion }}
