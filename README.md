@@ -125,6 +125,85 @@ Outputs in a sub directory:
 ![Outputs](screenshots/arbiter_outputs.png?raw=true "Outputs")
 
 
+## Render Format
+
+The default mode for using arbiter is in the browser, where it renders
+HTML. It can also render its search results as JSON for easier machine
+consumption. For example:
+
+```
+  $ curl -s 'http://localhost:6060/search?backend=be_1&spath=foo&format=json' | jq
+{
+  "backendNames": [
+    "be_1",
+    "be_2"
+  ],
+  "result": {
+    "outputs": {
+      "name": "foo"
+    },
+    "terraformVersion": "1.9.1",
+    "subdirs": {}
+  },
+  "spath": "foo",
+  "selectedBackend": "be_1"
+}
+```
+
+If the queried search path has available subdirectories, they will be
+listed in the `result` key. For example:
+
+```
+  $ curl -s 'http://localhost:6060/search?backend=be_1&spath=.&format=json' | jq
+{
+  "backendNames": [
+    "be_1",
+    "be_2"
+  ],
+  "result": {
+    "outputs": null,
+    "terraformVersion": "",
+    "subdirs": {
+      "bar": "/search?backend=be_1&spath=bar",
+      "foo": "/search?backend=be_1&spath=foo"
+    }
+  },
+  "spath": ".",
+  "selectedBackend": "be_1"
+}
+```
+
+In the event of an error the `"error"` key will be set at the top
+level. For example:
+
+```
+  $ curl -s 'http://localhost:6060/search?backend=be_1&spath=baz&format=json' | jq
+{
+  "backendNames": [
+    "be_1",
+    "be_2"
+  ],
+  "error": "could not read path contents: open baz: no such file or directory",
+  "result": {
+    "outputs": null,
+    "terraformVersion": "",
+    "subdirs": null
+  },
+  "spath": "baz",
+  "selectedBackend": "be_1"
+}
+```
+
+The arguments `backend` and `spath` are the backend and search path to
+query (default is first available backend and a spath of `.`), and the
+`format` can be either `html` (which is the default if none is
+specified) or `json`, which will output the structure from the
+example.
+
+Support for JSON rendering is experimental, and the format is subject
+to change. Specifying any `format` other than `html` or `json` will
+result in an error message.
+
 ## Assumptions
 
 The main assumption arbiter makes is that all of your outputs, including those
