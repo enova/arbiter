@@ -34,6 +34,10 @@
     <p><pre>{{ $value }}</pre></p>
     {{ end }}
     {{ end }}
+    {{ if .Result.TerraformVersion }}
+    <h2>Metadata:</h2>
+    <p><strong>terraform version:</strong> <code>{{ .Result.TerraformVersion }}</code></p>
+    {{ end }}
     {{ end }}
   </body>
 </html>
