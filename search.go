@@ -76,17 +76,17 @@ func newSearchHandler(backends BackendList, tmpl *template.Template, log Logger)
 }
 
 type searchView struct {
-	BackendNames    []string
-	Err             error
-	Result          searchResult
-	SPath           string
-	SelectedBackend string
+	BackendNames    []string     `json:"backendNames"`
+	Err             string       `json:"error,omitempty"`
+	Result          searchResult `json:"result"`
+	SPath           string       `json:"spath"`
+	SelectedBackend string       `json:"selectedBackend"`
 }
 
 type searchResult struct {
-	Outputs          map[string]json.RawMessage
-	TerraformVersion string
-	Subdirs          map[string]string
+	Outputs          map[string]json.RawMessage `json:"outputs"`
+	TerraformVersion string                     `json:"terraformVersion"`
+	Subdirs          map[string]string          `json:"subdirs"`
 }
 
 func handleSearch(w http.ResponseWriter, r *http.Request, backends BackendList, tmpl *template.Template, log Logger) {
@@ -103,6 +103,11 @@ func handleSearch(w http.ResponseWriter, r *http.Request, backends BackendList, 
 		backend = backendNames[0]
 	}
 
+	format := r.URL.Query().Get("format")
+	if format == "" {
+		format = "html"
+	}
+
 	view.SPath = spath
 	view.SelectedBackend = backend
 
@@ -110,8 +115,8 @@ func handleSearch(w http.ResponseWriter, r *http.Request, backends BackendList, 
 
 	stateFS := backends.GetState(backend)
 	if stateFS == nil {
-		view.Err = fmt.Errorf(`backend "%s" not found`, backend)
-		render(w, view, tmpl, log)
+		view.Err = fmt.Sprintf(`backend "%s" not found`, backend)
+		render(w, view, format, tmpl, log)
 		return
 	}
 
@@ -121,9 +126,11 @@ func handleSearch(w http.ResponseWriter, r *http.Request, backends BackendList, 
 	}
 
 	view.Result = res
-	view.Err = err
+	if err != nil {
+		view.Err = err.Error()
+	}
 
-	render(w, view, tmpl, log)
+	render(w, view, format, tmpl, log)
 }
 
 func executeSearch(stateFS fs.FS, spath, backend string) (searchResult, error) {
@@ -190,8 +197,27 @@ func prettyJSON(r json.RawMessage) (string, error) {
 	return string(pretty), nil
 }
 
-func render(w http.ResponseWriter, view searchView, tmpl *template.Template, log Logger) {
+func render(w http.ResponseWriter, view searchView, format string, tmpl *template.Template, log Logger) {
+	switch format {
+	case "html":
+		renderHTML(w, view, tmpl, log)
+	case "json":
+		renderJSON(w, view, log)
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "no implementation for format: %s\n", format)
+	}
+}
+
+func renderHTML(w http.ResponseWriter, view searchView, tmpl *template.Template, log Logger) {
 	err := tmpl.ExecuteTemplate(w, "search.tmpl", view)
+	if err != nil {
+		log.Printf("render failed: %s", err.Error())
+	}
+}
+
+func renderJSON(w http.ResponseWriter, view searchView, log Logger) {
+	err := json.NewEncoder(w).Encode(view)
 	if err != nil {
 		log.Printf("render failed: %s", err.Error())
 	}
